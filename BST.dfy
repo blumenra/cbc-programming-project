@@ -50,6 +50,22 @@ predicate NoDuplicates(q: seq<int>) { forall i,j :: 0 <= i < j < |q| ==> q[i] !=
 method BuildBST(q: seq<int>) returns (t: Tree)
 	requires NoDuplicates(q)
 	ensures BST(t) && NumbersInTree(t) == NumbersInSequence(q)
+{
+	
+	
+	var i:nat := 0;
+	
+	t := Empty;
+	
+	while(i < |q|)
+	invariant 0 <= i <= |q|
+	invariant BST(t)
+	invariant NumbersInTree(t) == NumbersInSequence(q[0..i])
+	{
+		t := InsertBST(t, q[i]);
+		i := i+1;
+	}
+}
 
 method InsertBST(t0: Tree, x: int) returns (t: Tree)
 	requires BST(t0) && x !in NumbersInTree(t0)
