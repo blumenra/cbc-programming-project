@@ -47,7 +47,6 @@ method HeapInsert(a: array<int>, heapsize: nat, x: int)
 		var old2:=a[j];
 		var old_set:= multiset(a[..heapsize+1]);
 		Swap(a, (j-1)/2, j,heapsize);
-		assert a[(j-1)/2]==x;
 		assert  a[(j-1)/2]==old2;
 		assert a[j]==old1;
 		assert old_set==multiset(a[..heapsize+1]);
@@ -56,7 +55,7 @@ method HeapInsert(a: array<int>, heapsize: nat, x: int)
 	assert !(j > 0 && a[(j-1)/2] < a[j]);
 	assert Inv(a,heapsize,x,j,old_seq,old_seq2);
 	assert  hp(a[..], heapsize+1);
-	assert multiset(a[..heapsize+1]) == multiset(old(a[..heapsize])+[x]);
+	assert multiset(a[..heapsize+1]) == multiset(old_seq2+[x]);
 	
 	}
 
@@ -83,7 +82,6 @@ reads a;
 	multiset(a[..j+1]) == multiset(a[..j]+[x]) &&
 	multiset(a[..heapsize+1])==multiset(old_seq2) && 
 	j>0 ==> AncestorIndex((j-1)/2,j) &&
-	ph(a[..],IndexSet(j+1,heapsize)) &&
 	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k])&&				
 	a[j]==x &&
 	multiset(a[..heapsize+1]) ==multiset(old_seq+[x])
