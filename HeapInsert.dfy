@@ -9,15 +9,23 @@ method HeapInsert(a: array<int>, heapsize: nat, x: int)
 	{
 	assert heapsize < a.Length;
 	assert hp(a[..], heapsize);
-	a[heapsize]:=x;
-	Heapify(a,heapsize,x);
+	//alternation
+	if heapsize == 0
+	{
+		a[heapsize]:=x;
+	}
+	else
+	{
+		a[heapsize]:=x;
+		Heapify(a,heapsize,x);
+	}		
 	assert  hp(a[..], heapsize+1);
 	assert multiset(a[..heapsize+1]) == multiset(old(a[..heapsize])+[x]);
 	}
 
 
 	method Heapify(a: array<int>,heapsize: nat, x: int)
-	requires heapsize < a.Length
+	requires 0 < heapsize < a.Length
 	requires  multiset(a[..heapsize+1]) == multiset(a[..heapsize]+[x])
 	requires hp(a[..], heapsize)
 	ensures hp(a[..], heapsize+1)
@@ -28,69 +36,26 @@ method HeapInsert(a: array<int>, heapsize: nat, x: int)
 	assert multiset(a[..heapsize+1]) == multiset(a[..heapsize]+[x]);
 	assert hp(a[..], heapsize);
     var j:=heapsize;
+	ghost var old_seq:= a[..heapsize];
+	ghost var old_seq2:= a[..heapsize+1];
     while (j > 0 && a[(j-1)/2] < a[j]) 
-		invariant 0 <= j <=heapsize
-		invariant 	0 <= heapsize < a.Length
-		invariant hp(a[..], j);
-	    invariant multiset(a[..j+1]) == multiset(a[..j]+[x])
-		invariant multiset(a[..heapsize+1])==multiset(old(a[..heapsize+1]))
-		invariant   j>0 ==> AncestorIndex((j-1)/2,j) ;
-		//invariant  ph(a[..],IndexSet(j+1,heapsize));
-		invariant (forall k , h :: 0 < h <=k <= j  && k!=j && AncestorIndex(h, k)  ==> a[h] >= a[k])
-		invariant	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k]);					
-		invariant a[j]==x ;
-		invariant multiset(a[..heapsize+1]) ==multiset(old(a[..heapsize])+[x])
+		invariant Inv(a,heapsize,x,j,old_seq,old_seq2);
 		decreases j
    
     {
-		assert 0 <= j <=heapsize;
-		assert 	0 <= heapsize < a.Length;
-		assert hp(a[..], j);
-		assert multiset(a[..j+1]) == multiset(a[..j]+[x]);
-		assert multiset(a[..heapsize+1])==multiset(old(a[..heapsize+1]));
-		assert   j>0 ==> AncestorIndex((j-1)/2,j) ;
-	//	assert  ph(a[..],IndexSet(j+1,heapsize));
-		assert (forall k , h :: 0 < h <=k <= j  && k!=j && AncestorIndex(h, k)  ==> a[h] >= a[k]);
-		assert	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k]);					
-		assert a[j]==x ;
-		assert multiset(a[..heapsize+1]) ==multiset(old(a[..heapsize])+[x]);
-
 		var old1:=a[(j-1)/2];
 		var old2:=a[j];
 		var old_set:= multiset(a[..heapsize+1]);
 		Swap(a, (j-1)/2, j,heapsize);
-		assert a[(j-1)/2]==x;
 		assert  a[(j-1)/2]==old2;
 		assert a[j]==old1;
 		assert old_set==multiset(a[..heapsize+1]);
 	  	j := (j-1)/2;
-
-		assert 0 <= j <=heapsize;
-		assert 	0 <= heapsize < a.Length;
-		assert hp(a[..], j);
-		assert multiset(a[..j+1]) == multiset(a[..j]+[x]);
-		assert multiset(a[..heapsize+1])==multiset(old(a[..heapsize+1]));
-		assert   j>0 ==> AncestorIndex((j-1)/2,j) ;
-		//assert  ph(a[..],IndexSet(j+1,heapsize));
-		assert (forall k , h :: 0 < h <=k <= j  && k!=j && AncestorIndex(h, k)  ==> a[h] >= a[k]);
-		assert	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k]);					
-		assert a[j]==x ;
-		assert multiset(a[..heapsize+1]) ==multiset(old(a[..heapsize])+[x]);
-	
     }
-	assert  j>0 ==> AncestorIndex((j-1)/2,j) ;
-	assert 0 <= j <=heapsize;
-	assert 	0 <= heapsize < a.Length;
-	assert hp(a[..], j);
-	assert multiset(a[..j+1]) == multiset(a[..j]+[x]);
-	assert multiset(a[..heapsize+1])==multiset(old(a[..heapsize+1]));
-	assert   j>0 ==> AncestorIndex((j-1)/2,j) ;
-	//assert  ph(a[..],IndexSet(j+1,heapsize));
-	assert (forall k , h :: 0 < h <=k <= j  && k!=j && AncestorIndex(h, k)  ==> a[h] >= a[k]);
-	assert	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k]);					
-	assert a[j]==x ;
-	assert multiset(a[..heapsize+1]) ==multiset(old(a[..heapsize])+[x]);
-	assert hp(a[..], heapsize+1);
+	assert !(j > 0 && a[(j-1)/2] < a[j]);
+	assert Inv(a,heapsize,x,j,old_seq,old_seq2);
+	assert  hp(a[..], heapsize+1);
+	assert multiset(a[..heapsize+1]) == multiset(old_seq2+[x]);
 	
 	}
 
@@ -107,4 +72,19 @@ method Swap(a: array<int>, i: int, j: int,heapsize:nat)
   a[i], a[j] := a[j], a[i];
 }
 
+
+predicate Inv(a: array<int>,heapsize: nat, x: int , j:int ,old_seq:seq<int>,old_seq2:seq<int>)
+reads a;
+{
+	0 <= j <= heapsize && 
+	0 < heapsize < a.Length && 
+	 hp(a[..], j) &&
+	multiset(a[..j+1]) == multiset(a[..j]+[x]) &&
+	multiset(a[..heapsize+1])==multiset(old_seq2) && 
+	j>0 ==> AncestorIndex((j-1)/2,j) &&
+	(forall k,h :: j < h <= k <= heapsize  && (k - 1) / 2 == j && j > 0 && AncestorIndex(h, k)  ==>  a[h] >= a[k])&&				
+	a[j]==x &&
+	multiset(a[..heapsize+1]) ==multiset(old_seq+[x])
+
+}
 
