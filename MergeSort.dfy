@@ -64,18 +64,19 @@ method Merge(b: array<int>, c: array<int>, d: array<int>)
 	ensures Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..])
 	modifies b
 {
-
 	var bi, ci, di := Loop1(b, c, d);
-	
+	//==> 
+	assert ci == c.Length || di == d.Length;
+
 	if(ci == c.Length)
 	{
 		Loop2(b, d, c, bi, di, ci);
 	}
 	else
 	{
+		assert di == d.Length;
 		Loop2(b, c, d, bi, ci, di);
 	}
-
 
 	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 }
@@ -85,17 +86,16 @@ method copySeqToArray(q:seq<int>, a:array<int>)
 	ensures q == a[..]
 	modifies a
 {
+	var i:nat := 0;
 
-		var i:nat := 0;
+	while(i < a.Length)
+	invariant 0 <= i <= a.Length
+	invariant a[..i] == q[..i]
+	{
 
-		while(i < a.Length)
-		invariant 0 <= i <= a.Length
-		invariant a[..i] == q[..i]
-		{
-
-			a[i] := q[i];
-			i := i+1;
-		}
+		a[i] := q[i];
+		i := i+1;
+	}
 }
 
 method Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, ci:nat, di:nat)
@@ -104,29 +104,17 @@ method Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, ci:na
 	
 	ensures  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
 	ensures bi == ci+di
-	ensures  SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-	ensures  multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
+	ensures SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
+	ensures multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
 	ensures ci == c.Length || di == d.Length
-	ensures subarraySetByIndex(c, ci, b, bi)
-	ensures subarraySetByIndex(d, di, b, bi)
-	ensures pred(b, c, bi, ci)
-	ensures pred(b, d, bi, di)
+	ensures preffixASmallerThanSuffixB(b, c, bi, ci) && preffixASmallerThanSuffixB(b, d, bi, di)
 
 	modifies b
 {
-	bi := 0;
-	ci := 0;
-	di := 0;
+	bi, ci, di := 0, 0, 0;
 
 	while(ci < c.Length && di < d.Length)
-		invariant 0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
-		invariant bi == ci+di
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
-		invariant subarraySetByIndex(c, ci, b, bi)
-		invariant subarraySetByIndex(d, di, b, bi)
-		invariant pred(b, c, bi, ci)
-		invariant pred(b, d, bi, di)
+		invariant LoopsInv(b, c, d, bi, ci, di)
 
 		decreases c.Length-ci
 		decreases d.Length-di
@@ -149,66 +137,68 @@ method Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, ci:na
 	}
 }
 
-method Loop2(b: array<int>, c: array<int>, d: array<int>, bi0:nat, ci0:nat, di0:nat) 
-	requires b.Length == c.Length + d.Length
-	requires 0 <= bi0 <= b.Length && 0 <= ci0 <= c.Length && 0 <= di0 <= d.Length
-	requires bi0 == ci0+di0
-	requires SortedSequence(b[0..bi0]) && SortedSequence(c[..]) && SortedSequence(d[..])
-	requires multiset(b[..bi0]) == multiset(c[..ci0]) + multiset(d[..di0])
-	requires di0 == d.Length
-	requires subarraySetByIndex(d, di0, b, bi0)
-	requires pred(b, c, bi0, ci0) && pred(b, d, bi0, di0)
+method Loop2(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, arr1i0:nat, arr2i0:nat) 
+	requires b.Length == arr1.Length + arr2.Length
+	requires 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length
+	requires bi0 == arr1i0 + arr2i0
+	requires SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..])
+	requires multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0])
+	requires arr2i0 == arr2.Length
+	requires preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0)
 
 	ensures Sorted(b)
-	ensures multiset(b[..]) == multiset(c[..])+multiset(d[..])
+	ensures multiset(b[..]) == multiset(arr1[..])+multiset(arr2[..])
 
 	modifies b
 {
-	var bi, ci, di := bi0, ci0, di0;
+	var bi, arr1i, arr2i := bi0, arr1i0, arr2i0;
 
-	while(ci < c.Length)
-		invariant 0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
-		invariant bi == ci+di
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
-		invariant di == d.Length
-		invariant forall i,j:: ci <= i < c.Length && 0 <= j < bi ==> b[j] <= c[i]
+	while(arr1i < arr1.Length)
+		invariant LoopsInv(b, arr1, arr2, bi, arr1i, arr2i)
 	{		
-		b[bi] := c[ci];
+		b[bi] := arr1[arr1i];
 
-		ci := ci+1;
+		arr1i:= arr1i+1;
 
 		bi := bi+1;
 	}
 
+	assert arr2i == arr2.Length; // From pre-condition and the fact that the while loop didn't updated di
+	assert arr1i == arr1.Length; // From while inv "0 <= ci <= c.Length" + NOT(guard) "ci >= c.Length"
+	assert bi == b.Length; // From while inv "bi == ci+di" + above 2 assertions
+	assert multiset(b[..bi]) == multiset(arr1[..arr1i]) + multiset(arr2[..arr2i]); // From while inv
+	multiset_L(b, arr1, arr2, bi, arr1i, arr2i);
+	// ==>
+	assert multiset(b[..]) == multiset(arr1[..])+multiset(arr2[..]);
+	
+	
 	assert bi == b.Length;
-	assert SortedSequence(b[0..bi]); // while inv
+	assert SortedSequence(b[0..bi]); // From while inv
 	L1(b, bi);
 	// ==>
 	assert Sorted(b);
-
-
-	assert bi == b.Length;
-	assert ci == c.Length;
-	assert di == d.Length;
-	multiset_L(b, c, d, bi, ci, di);
-	// ==>
-	assert multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 }
 
-predicate pred(a: array<int>, b: array<int>, ai:nat, bi:nat)
+predicate LoopsInv(b: array<int>, arr1: array<int>, arr2: array<int>, bi:nat, arr1i:nat, arr2i:nat)
+	reads b, arr1, arr2
+{
+	0 <= bi <= b.Length && 0 <= arr1i <= arr1.Length && 0 <= arr2i <= arr2.Length &&
+	bi == arr1i + arr2i &&
+	multiset(b[..bi]) == multiset(arr1[..arr1i]) + multiset(arr2[..arr2i]) &&
+	preffixASmallerThanSuffixB(b, arr1, bi, arr1i) &&
+	preffixASmallerThanSuffixB(b, arr2, bi, arr2i) &&
+	SortedSequence(b[0..bi]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..])
+}
+
+
+/*
+All the numbers in @a until index @ai are smaller than each number in @b from index @bi to the end
+*/
+predicate preffixASmallerThanSuffixB(a: array<int>, b: array<int>, ai:nat, bi:nat)
 	requires ai <= a.Length
 	reads a,b
 {
 	forall i,j:: 0 <= i < ai && bi <= j < b.Length ==> a[i] <= b[j]
-}
-
-predicate subarraySetByIndex(a:array<int>, ai:nat, b:array<int>, bi:nat)
-	requires 0 <= ai <= a.Length
-	requires 0 <= bi <= b.Length
-	reads a, b
-{
-	multiset(a[..ai]) <= multiset(b[..bi])
 }
 
 lemma L1(b:array<int>, bi:nat)
