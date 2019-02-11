@@ -13,7 +13,7 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 	ensures b.Length == a.Length && Sorted(b) && multiset(a[..]) == multiset(b[..])
 	decreases a.Length
 {
-b := new int[a.Length];
+	b := new int[a.Length];
 	if(a.Length <= 1){
 		b := a;
 	}
@@ -26,82 +26,27 @@ b := new int[a.Length];
 		var leftArr := new int[|leftSeq|];
 		var rightArr := new int[|rightSeq|];
 
-		var i:nat := 0;
+		assert a[..] == leftSeq + rightSeq;
 
-		while(i < leftArr.Length)
-		invariant forall k:: 0 <= k < i <= leftArr.Length ==> leftArr[k] == leftSeq[k]
-		invariant 0 <= i <= leftArr.Length
-		{
-
-			leftArr[i] := leftSeq[i];
-			i := i+1;
-		}
-		
-		assert i == leftArr.Length;
-		assert forall k:: 0 <= k < i <= leftArr.Length ==> leftArr[k] == leftSeq[k];
+		copySeqToArray(leftSeq, leftArr);
+		copySeqToArray(rightSeq, rightArr);
 		//==>
-		assert forall k:: 0 <= k  < leftArr.Length ==> leftArr[k] == leftSeq[k];
+		assert leftSeq == leftArr[..] && rightSeq == rightArr[..];
 		//==>
-		assert leftArr[..] == leftSeq;
-
-		var j:nat := 0;
-		while(j < rightArr.Length)
-		invariant forall k:: 0 <= k < j <= rightArr.Length ==> rightArr[k] == rightSeq[k]
-		invariant leftArr[..] == leftSeq
-		invariant 0 <= j <= rightArr.Length
-		{
-
-			rightArr[j] := rightSeq[j];
-
-			j := j+1;
-		}
-		
-		assert forall k:: 0 <= k < j <= rightArr.Length ==> rightArr[k] == rightSeq[k];
-		assert j == rightArr.Length;
-
+		assert a[..] == leftArr[..] + rightArr[..];
 		//==>
-		
-		assert leftArr[..] == leftSeq;
-		assert rightArr[..] == rightSeq;
-		
-		//==>
-		assert forall k:: 0 <= k < leftArr.Length ==> leftArr[k] == a[k];
-
-
-		//==>
-		assert forall k:: 0 <= k < mid ==> leftArr[k] == a[k];
-		assert forall i:: 0 <= i < |rightArr[..]| ==> rightArr[..][i] == rightSeq[i];
-
-		//==>
-		assert forall i:: 0 <= i < leftArr.Length ==> leftArr[i] == a[i];
-		assert forall i:: 0 <= i < |rightArr[..]| ==> rightArr[..][i] == a[mid..a.Length][i];
-
-		//==>
-		mulset2(leftArr[..], a[0..mid]);
-		mulset2(rightArr[..], a[mid..a.Length]);
-		
-		assert multiset(leftArr[..]) == multiset(a[0..mid]);
-		assert multiset(rightArr[..]) == multiset(a[mid..a.Length]);
-
-		mulset(a);
-		assert multiset(a[..]) == multiset(a[0..mid])+multiset(a[mid..a.Length]);
-		// ==>
-
 		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]);
-		
+
 		var leftSortedArr := MergeSort(leftArr);
-		
-		
 
-
-
-
-		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]);
+		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
 		
 		var rightSortedArr := MergeSort(rightArr);
 
+		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
+
 		Merge(b, leftSortedArr, rightSortedArr);
-		
+		//==>
 		assert Sorted(b) && multiset(b[..]) == multiset(leftSortedArr[..])+multiset(rightSortedArr[..]);
 		//==>
 		assert multiset(a[..]) == multiset(leftSortedArr[..])+multiset(rightSortedArr[..]);
@@ -110,7 +55,7 @@ b := new int[a.Length];
 	}
 
 
-	assert multiset(a[..]) == multiset(b[..]);
+	assert b.Length == a.Length && Sorted(b) && multiset(a[..]) == multiset(b[..]);
 }
 
 method Merge(b: array<int>, c: array<int>, d: array<int>)
@@ -119,197 +64,176 @@ method Merge(b: array<int>, c: array<int>, d: array<int>)
 	ensures Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..])
 	modifies b
 {
-	var bi:nat := 0;
-	var ci:nat := 0;
-	var di:nat := 0;
+
+	var bi, ci, di := Loop1(b, c, d);
 	
+	if(ci == c.Length)
+	{
+		Loop2(b, d, c, bi, di, ci);
+	}
+	else
+	{
+		Loop2(b, c, d, bi, ci, di);
+	}
+
+
+	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
+}
+
+method copySeqToArray(q:seq<int>, a:array<int>)
+	requires |q| == a.Length
+	ensures q == a[..]
+	modifies a
+{
+
+		var i:nat := 0;
+
+		while(i < a.Length)
+		invariant 0 <= i <= a.Length
+		invariant a[..i] == q[..i]
+		{
+
+			a[i] := q[i];
+			i := i+1;
+		}
+}
+
+method Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, ci:nat, di:nat)
+	requires b != c && b != d && b.Length == c.Length + d.Length
+	requires Sorted(c) && Sorted(d)
+	
+	ensures  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
+	ensures bi == ci+di
+	ensures  SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
+	ensures  multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
+	ensures ci == c.Length || di == d.Length
+	ensures subarraySetByIndex(c, ci, b, bi)
+	ensures subarraySetByIndex(d, di, b, bi)
+	ensures pred(b, c, bi, ci)
+	ensures pred(b, d, bi, di)
+
+	modifies b
+{
+	bi := 0;
+	ci := 0;
+	di := 0;
+
 	while(ci < c.Length && di < d.Length)
 		invariant 0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
 		invariant bi == ci+di
 		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant forall k:: 0 <= k < ci ==> c[k] in b[0..bi]
-		invariant forall k:: 0 <= k < di ==> d[k] in b[0..bi]
-		invariant forall ck:: 0 <= ck < ci ==> b[bi-1] >= c[ck]
-		invariant bi >= di && bi >= ci
-		invariant if di < d.Length then forall k:: 0 <= k < bi ==> b[k] <= d[di] else true
-		invariant if ci < c.Length then forall k:: 0 <= k < bi ==> b[k] <= c[ci] else true
 		invariant multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
+		invariant subarraySetByIndex(c, ci, b, bi)
+		invariant subarraySetByIndex(d, di, b, bi)
+		invariant pred(b, c, bi, ci)
+		invariant pred(b, d, bi, di)
 
 		decreases c.Length-ci
 		decreases d.Length-di
 	{
-
+		
 		if(c[ci] <= d[di]){
-			assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-
+			
 			b[bi] := c[ci];
 			
-			assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-			L(b[..], bi, c[..], ci);
-			//==>
-			assert forall k:: 0 <= k < ci+1 ==> c[k] in b[0..bi+1];
-			assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
-			assert multiset(b[..bi+1]) == multiset(c[..ci+1]) + multiset(d[..di]);
-
 			ci := ci+1;
-			
-			assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-			assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
-			assert multiset(b[..bi+1]) == multiset(c[..ci]) + multiset(d[..di]);
 		}
 		else{
 			
-			assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
 			b[bi] := d[di];
 			
-			assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-			L(b[..], bi, d[..], di);
-			//==>
-			assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-			assert forall k:: 0 <= k < di+1 ==> d[k] in b[0..bi+1];
 			di := di+1;
-			
-			assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-			assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
-			assert multiset(b[..bi+1]) == multiset(c[..ci]) + multiset(d[..di]);
 		}
 
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
-		assert multiset(b[..bi+1]) == multiset(c[..ci]) + multiset(d[..di]);
-
 		bi := bi+1;
-
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-		assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
 	}
+}
+
+method Loop2(b: array<int>, c: array<int>, d: array<int>, bi0:nat, ci0:nat, di0:nat) 
+	requires b.Length == c.Length + d.Length
+	requires 0 <= bi0 <= b.Length && 0 <= ci0 <= c.Length && 0 <= di0 <= d.Length
+	requires bi0 == ci0+di0
+	requires SortedSequence(b[0..bi0]) && SortedSequence(c[..]) && SortedSequence(d[..])
+	requires multiset(b[..bi0]) == multiset(c[..ci0]) + multiset(d[..di0])
+	requires di0 == d.Length
+	requires subarraySetByIndex(d, di0, b, bi0)
+	requires pred(b, c, bi0, ci0) && pred(b, d, bi0, di0)
+
+	ensures Sorted(b)
+	ensures multiset(b[..]) == multiset(c[..])+multiset(d[..])
+
+	modifies b
+{
+	var bi, ci, di := bi0, ci0, di0;
 
 	while(ci < c.Length)
 		invariant 0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
 		invariant bi == ci+di
 		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant forall k:: 0 <= k < ci ==> c[k] in b[0..bi]
-		invariant forall k:: 0 <= k < di ==> d[k] in b[0..bi]
-		invariant forall ck:: 0 <= ck < ci ==> b[bi-1] >= c[ck]
-		invariant bi >= di && bi >= ci
-		invariant if di < d.Length then forall k:: 0 <= k < bi ==> b[k] <= d[di] else true
-		invariant if ci < c.Length then forall k:: 0 <= k < bi ==> b[k] <= c[ci] else true
 		invariant multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
-	{
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-		
+		invariant di == d.Length
+		invariant forall i,j:: ci <= i < c.Length && 0 <= j < bi ==> b[j] <= c[i]
+	{		
 		b[bi] := c[ci];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-		L(b[..], bi, c[..], ci);
-		//==>
-
-		assert forall k:: 0 <= k < ci+1 ==> c[k] in b[0..bi+1];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
 
 		ci := ci+1;
 
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
-
 		bi := bi+1;
-
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
 	}
 
-	while(di < d.Length)
-		invariant 0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length
-		invariant bi == ci+di
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..])
-		invariant forall k:: 0 <= k < ci ==> c[k] in b[0..bi]
-		invariant forall k:: 0 <= k < di ==> d[k] in b[0..bi]
-		invariant forall ck:: 0 <= ck < ci ==> b[bi-1] >= c[ck]
-		invariant bi >= di && bi >= ci
-		invariant if di < d.Length then forall k:: 0 <= k < bi ==> b[k] <= d[di] else true
-		invariant if ci < c.Length then forall k:: 0 <= k < bi ==> b[k] <= c[ci] else true
-		invariant multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
-	{
-		
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-		
-		b[bi] := d[di];
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-		L(b[..], bi, d[..], di);
-		//==>
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-		assert forall k:: 0 <= k < di+1 ==> d[k] in b[0..bi+1];
-		
-		di := di+1;
+	assert bi == b.Length;
+	assert SortedSequence(b[0..bi]); // while inv
+	L1(b, bi);
+	// ==>
+	assert Sorted(b);
 
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi+1];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi+1];
 
-		bi := bi+1;
-
-		assert forall k:: 0 <= k < ci ==> c[k] in b[0..bi];
-		assert forall k:: 0 <= k < di ==> d[k] in b[0..bi];
-	}
-
-	assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
-
-	L3(b[..], bi, c[..], ci, d[..], di);
-	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
+	assert bi == b.Length;
+	assert ci == c.Length;
+	assert di == d.Length;
+	multiset_L(b, c, d, bi, ci, di);
+	// ==>
+	assert multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 }
 
+predicate pred(a: array<int>, b: array<int>, ai:nat, bi:nat)
+	requires ai <= a.Length
+	reads a,b
+{
+	forall i,j:: 0 <= i < ai && bi <= j < b.Length ==> a[i] <= b[j]
+}
 
-lemma L(b:seq<int>, bi:nat, s:seq<int>, si:nat)
-	requires 0 <= bi < |b| && 0 <= si < |s|
-	requires forall k:: 0 <= k < si ==> s[k] in b[0..bi]
-	requires b[bi] == s[si]
-	ensures forall k:: 0 <= k < si+1 ==> s[k] in b[0..bi+1]
+predicate subarraySetByIndex(a:array<int>, ai:nat, b:array<int>, bi:nat)
+	requires 0 <= ai <= a.Length
+	requires 0 <= bi <= b.Length
+	reads a, b
+{
+	multiset(a[..ai]) <= multiset(b[..bi])
+}
+
+lemma L1(b:array<int>, bi:nat)
+	requires bi == b.Length
+	requires SortedSequence(b[0..bi])
+	ensures Sorted(b)
 {}
 
-lemma L3(b:seq<int>, bi:nat, s1:seq<int>, s1i:nat, s2:seq<int>, s2i:nat)
-	requires 0 <= bi == |b| && 0 <= s1i == |s1| && 0 <= s2i == |s2|
-	requires multiset(b[..bi]) == multiset(s1[..s1i]) + multiset(s2[..s2i])
-	ensures multiset(b) == multiset(s1)+multiset(s2)
+lemma multiset_L(b: array<int>, c: array<int>, d: array<int>, bi:nat, ci:nat, di:nat)
+	requires bi == b.Length
+	requires ci == c.Length
+	requires di == d.Length
+	requires multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di])
+	ensures  multiset(b[..]) == multiset(c[..])+multiset(d[..])
 {
-	assert multiset(b[..bi]) == multiset(s1[..s1i]) + multiset(s2[..s2i]);
-	assert 0 <= bi == |b| && 0 <= s1i == |s1| && 0 <= s2i == |s2|;
-	//==>
-	assert multiset(b[..|b|]) == multiset(s1[..|s1|]) + multiset(s2[..|s2|]);
-	mulset2(b, b[..|b|]);
-	mulset2(s1, s1[..|s1|]);
-	mulset2(s2, s2[..|s2|]);
-	//==>
-	assert multiset(b) == multiset(s1)+multiset(s2);
+	seq_L(b[..]);
+	seq_L(c[..]);
+	seq_L(d[..]);
 }
 
-lemma mulset2(a: seq<int>, b: seq<int>)
-	requires a == b
-	ensures multiset(a) == multiset(b)
+lemma seq_L(q:seq<int>)
+	ensures q[..] == q[0..|q|]
 {}
 
-lemma mulset(a: array<int>)
-	ensures forall i:: 0 <= i < a.Length ==> multiset(a[..]) == multiset(a[0..i]) + multiset(a[i..a.Length])
-{
-	assert forall i:: 0 <= i < a.Length ==> a[..] == a[0..i] + a[i..a.Length];
-	//==>
-	assert forall i:: 0 <= i < a.Length ==> multiset(a[..]) == multiset(a[0..i]) + multiset(a[i..a.Length]);
-}
-/*
-lemma L2(b:seq<int>, bi:nat, s1:seq<int>, s1i:nat, s2:seq<int>, s2i:nat)
-	requires 0 <= bi < |b| && 0 <= s1i < |s1| && 0 <= s2i < |s2|
-	requires multiset(b[..bi]) == multiset(s1[..s1i]) + multiset(s2[..s2i])
-	requires b[bi] == s2[s2i]
-	//requires |b[..bi]| == |s1[..s1i]| + |s2[..s2i]|
-	ensures multiset(b[..bi+1]) == multiset(s1[..s1i]) + multiset(s2[..s2i+1])
-{
-	assert multiset(b[..bi]) == multiset(s1[..s1i]) + multiset(s2[..s2i]);
-	assert b[bi] == s2[s2i];
 
-	assert multiset(b[..bi+1]) == multiset(s1[..s1i]) + multiset(s2[..s2i+1]);
-}
-*/
 method Main() {
 	var a := new int[3];
 	a[0], a[1], a[2] := 4, 8, 6;
