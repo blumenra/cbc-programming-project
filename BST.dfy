@@ -52,81 +52,209 @@ method BuildBST(q: seq<int>) returns (t: Tree)
 	ensures BST(t) && NumbersInTree(t) == NumbersInSequence(q)
 {
 	
+	assert NoDuplicates(q);
+
+	var i:nat;// introduce local variable + strengthen postcondition
+	i,t:=BuildBST2(q);
+	LemmaX(q,i,t);
 	
-	var i:nat := 0;
-	
-	t := Empty;
-	
-	while(i < |q|)
-	invariant 0 <= i <= |q|
-	invariant BST(t)
-	invariant NumbersInTree(t) == NumbersInSequence(q[0..i])
-	{
-		t := InsertBST(t, q[i]);
-		i := i+1;
-	}
+	assert BST(t) && NumbersInTree(t) == NumbersInSequence(q);
 }
+
+method BuildBST2(q: seq<int>) returns  (i:nat ,t :Tree)
+requires NoDuplicates(q)
+ensures Inv(q,t,i) && !Guard1(q,i,t)
+{
+	// sequential composition
+
+	assert  NoDuplicates(q);
+
+	i,t:=Init(q);
+	i,t:=Loop(q,i,t);
+
+	assert Inv(q,t,i) && !Guard1(q,i,t);
+
+
+}
+
+method Loop(q: seq<int>,i0:nat,t0:Tree) returns  (i:nat ,t :Tree)
+requires  Inv(q,t0,i0) && NoDuplicates(q)
+ensures  Inv(q,t,i) && !Guard1(q,i,t)
+{
+
+	assert Inv(q,t0,i0) && NoDuplicates(q);
+
+	i:=i0;
+	t:=t0;
+	//iterationd
+	while(Guard1(q,i,t))
+	invariant Inv(q,t,i)
+	decreases V(q,i)
+	{
+		
+		i,t:=LoopBody(q,i,t);
+
+	}
+	assert Inv(q,t,i) && !Guard1(q,i,t);
+
+	
+}
+
+method LoopBody(q: seq<int>,i0:nat,t0:Tree) returns  (i:nat ,t :Tree)
+requires  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q)
+ensures Inv(q,t,i) && 0 <= V(q,i) < V(q,i0)
+{
+
+		assert  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q);
+		i:=i0;
+		t:=t0;
+		
+		t := InsertBST(t, q[i]); 
+		LemmaI(q,i,t,t0); 
+		i:=i+1; //Following Assignment
+		LemmaWhile(q,i,t,i0,t0);
+
+		assert Inv(q,t,i) && 0 <= V(q,i) < V(q,i0);
+		
+
+}
+function V(q:seq<int>,i:nat): int
+{
+	|q|-i
+}
+
+predicate  Inv(q: seq<int> ,t: Tree,i:nat)
+{
+	 0 <= i <= |q| && 
+	 BST(t) &&
+	 NumbersInTree(t) == NumbersInSequence(q[0..i])
+}
+
+
+
+
+lemma LemmaI(q: seq<int>,i:nat,t:Tree,t0:Tree)
+	requires Inv(q,t0,i);
+	requires  0 <= i < |q|
+	requires BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{q[i]}
+	ensures Inv(q,t,i+1);
+	ensures i < i+1
+{}
+
+
+
+
+lemma LemmaX(q: seq<int>,i:nat,t:Tree)
+requires Inv(q,t,i)
+requires !Guard1(q,i,t)
+ensures BST(t) && NumbersInTree(t) == NumbersInSequence(q)
+{}
+
+
+lemma LemmaWhile(q: seq<int>,i:nat,t:Tree,i0:nat,t0:Tree)
+	requires i>i0 && i==i0+1 && Inv(q,t,i)
+	ensures V(q,i0) > V(q,i)
+	ensures Inv(q,t,i) 
+{}
+
+predicate method Guard1(q: seq<int>,i:nat,t:Tree)
+{
+	i < |q|
+}
+
+method Init(q: seq<int>) returns (i: nat, t: Tree)
+requires NoDuplicates(q)
+ensures i==0
+ensures t==Empty
+ensures Inv(q,t,i)
+{//assignment
+	assert NoDuplicates(q);
+
+	LemmaInit(q);
+
+	i:=0;
+	t:=Empty;
+
+	assert i==0;
+	assert t==Empty;
+	assert Inv(q,t,i);
+
+}
+
+lemma LemmaInit(q: seq<int>) 
+	requires NoDuplicates(q)
+	ensures  Inv(q,Empty,0)
+{}
+
+
 
 method InsertBST(t0: Tree, x: int) returns (t: Tree)
 	requires BST(t0) && x !in NumbersInTree(t0)
 	ensures BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{x}
 {
+
 	match t0 {
 		case Empty => t := Node(x, Empty, Empty);
 		case Node(n',nt1,nt2) => 
-			if(x < n')
+			//alternation
+			if(Guard2(x,n'))
 			{
+
+				
+				assert 	Guard2(x,n');//guard
+
 				LemmaBinarySearchSubtree(n',nt1,nt2);
+
+				assert BST(nt1) && x !in NumbersInTree(nt1); //precondition of recursive call
+				
 				var tLeft := InsertBST(nt1, x);
+				
+				assert BST(tLeft) && NumbersInTree(tLeft) == NumbersInTree(nt1)+{x}; //postcondition of recursive call
+				
 				t := Node(n', tLeft, nt2);
+
 				L_BST(n', nt1, nt2);
-				/*
-				assert BST(t0);
-				assert greaterThanTree(nt1, n');
-				//==>
-				assert greaterThanTree(tLeft, n');
-				assert smallerThanTree(nt2, n');
-				*/
-				//L(n', tLeft, nt2);
+			
 				L_greater(nt1, n', x, tLeft);
 
-				assert BST(t);
+				assert NumbersInTree(t) == NumbersInTree(t0)+{x}; //post condition 
+				assert BST(t); //post condition 
+			
 			}
 			else
 			{
-				
+				assert 	!Guard2(x,n'); //not guard
+
 				LemmaBinarySearchSubtree(n',nt1,nt2);
+
+				assert BST(nt2) && x !in NumbersInTree(nt2); //precondition of recursive call
+
 				var tRight:Tree := InsertBST(nt2, x);
+
+				assert BST(tRight) && NumbersInTree(tRight) == NumbersInTree(nt2)+{x}; //postcondition of recursive call
+
 				t := Node(n', nt1, tRight);
+
 				L_BST(n', nt1, nt2);
-				
-				/*
-				assert BST(t0);
-				assert greaterThanTree(nt1, n');
-				
-				assert smallerThanTree(nt2, n');
-				assert n' < x;
-				assert NumbersInTree(tRight) == NumbersInTree(nt2)+{x};
-				//==>
-				assert greaterThanTree(nt1, n');
-				*/
-				//assert smallerThanTree(tRight, n');
 				
 				L_smaller(nt2, n', x, tRight);
 
-				assert NumbersInTree(t) == NumbersInTree(t0)+{x};
-
-				assert BST(t);
+				assert NumbersInTree(t) == NumbersInTree(t0)+{x}; //post condition 
+				assert BST(t); //post condition 
 				
 			}
 	}
+	assert NumbersInTree(t) == NumbersInTree(t0)+{x}; //post condition
+	assert BST(t); //post condition
 }
-/*
-predicate tree_NoDuplicates(t:Tree)
+
+
+
+predicate method Guard2(x:int,n':int)
 {
-	NoDuplicates(Inorder(t))
+	x < n'
 }
-*/
+
 lemma L3(t1:Tree, t2:Tree, x:int)
 	requires NumbersInTree(t1) == NumbersInTree(t2)+{x}
 	ensures forall i:: 0 <= i < |Inorder(t1)| ==> Inorder(t1)[i] in Inorder(t2) || Inorder(t1)[i] == x
@@ -174,11 +302,7 @@ lemma L_greater(nt1:Tree, n':int, x:int, tLeft:Tree)
 	//==>
 	assert greaterThanTree(tLeft, n');
 }
-/*
-lemma L_Ascending(q:seq<int>, x:int)
-	requires Ascending(q+[x])
-	ensures forall i:: 0 <= i < |q| ==> q[i] < x
-*/
+
 
 lemma L_BST(n: int, left: Tree, right: Tree)
 	requires BST(Node(n, left, right))
@@ -235,3 +359,5 @@ lemma LemmaAscendingSubsequence(q1: seq<int>, q2: seq<int>, i: nat)
 	requires Ascending(q1)
 	ensures Ascending(q2)
 {}
+
+
