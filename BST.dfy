@@ -108,8 +108,10 @@ ensures Inv(q,t,i) && 0 <= V(q,i) < V(q,i0)
 		assert  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q);
 		i:=i0;
 		t:=t0;
+		
 		t := InsertBST(t, q[i]); 
-		i:=UpdateI(q,i,t,t0);
+		LemmaI(q,i,t,t0); 
+		i:=i+1; //Following Assignment
 		LemmaWhile(q,i,t,i0,t0);
 
 		assert Inv(q,t,i) && 0 <= V(q,i) < V(q,i0);
@@ -129,32 +131,12 @@ predicate  Inv(q: seq<int> ,t: Tree,i:nat)
 }
 
 
-method UpdateI(q: seq<int>,i0:nat,t:Tree,ghost t0:Tree) returns (i: nat)
-	requires Inv(q,t0,i0);
-	requires Guard1(q,i0,t0)
-	requires BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{q[i0]}
-	ensures Inv(q,t,i);
-	ensures i==i0+1;
-	ensures  i>i0;
-{// Following Assignment + Assignment + strengthen postcondition
-	assert Guard1(q,i0,t);
-	assert BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{q[i0]};
 
-	i := i0;
 
-	LemmaI(q,i,t,t0);
-
-	i := i+1;
-	
-	assert i==i0+1;
-	assert i>i0;
-	assert Inv(q,t,i);
-}
-
-lemma LemmaI(q: seq<int>,i:nat,t:Tree, t0:Tree)
+lemma LemmaI(q: seq<int>,i:nat,t:Tree,t0:Tree)
 	requires Inv(q,t0,i);
-	requires Guard1(q,i,t)
-	 requires BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{q[i]}
+	requires  0 <= i < |q|
+	requires BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{q[i]}
 	ensures Inv(q,t,i+1);
 	ensures i < i+1
 {}
