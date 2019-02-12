@@ -38,12 +38,18 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]);
 
 		var leftSortedArr := MergeSort(leftArr);
-
-		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
+		//==>
+		assert multiset(leftSortedArr[..]) == multiset(leftArr[..]);
+		//==>
+		assert multiset(a[..]) == multiset(leftSortedArr[..]) + multiset(rightArr[..]);
 		
-		var rightSortedArr := MergeSort(rightArr);
 
-		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
+		var rightSortedArr := MergeSort(rightArr);
+		//==>
+		assert multiset(rightSortedArr[..]) == multiset(rightArr[..]);
+		//==>
+		assert multiset(a[..]) == multiset(leftSortedArr[..]) + multiset(rightSortedArr[..]);
+
 
 		Merge(b, leftSortedArr, rightSortedArr);
 		//==>
