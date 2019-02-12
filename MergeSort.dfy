@@ -21,6 +21,8 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 		b:=MS1(a,b);
 		
 	}
+
+
 	else{
 		
 		assert !Guard1(a); 
@@ -44,17 +46,22 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]);
 
 		var leftSortedArr := MergeSort(leftArr);
-
+		//==>
 		assert leftSortedArr.Length == leftArr.Length && Sorted(leftSortedArr) && multiset(leftArr[..]) == multiset(leftSortedArr[..]);//post condition recursive call
-
-		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
+		//==>
+		assert multiset(leftSortedArr[..]) == multiset(leftArr[..]);
+		//==>
+		assert multiset(a[..]) == multiset(leftSortedArr[..]) + multiset(rightArr[..]);
 		
+
 		var rightSortedArr := MergeSort(rightArr);
-
+		//==>
 		assert rightSortedArr.Length == rightArr.Length && Sorted(rightSortedArr) && multiset(rightArr[..]) == multiset(rightSortedArr[..]);//post condition recursive call
+		//==>
+		assert multiset(rightSortedArr[..]) == multiset(rightArr[..]);
+		//==>
+		assert multiset(a[..]) == multiset(leftSortedArr[..]) + multiset(rightSortedArr[..]);
 
-
-		assert multiset(a[..]) == multiset(leftArr[..])+multiset(rightArr[..]); // Still true after the assignment because MergeSort does not modify the given array
 
 		Merge(b, leftSortedArr, rightSortedArr);
 		//==>
