@@ -17,7 +17,6 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 	b := new int[a.Length];
 	//alternation
 	if(Guard1(a)){
-		assert Guard1(a);
 		b:=MS1(a,b);
 		
 	}
@@ -25,8 +24,7 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 
 	else{
 		
-		assert !Guard1(a); 
-
+		
 		var mid := a.Length/2;
 
 		var leftSeq := a[0..mid];
@@ -47,7 +45,7 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 
 		var leftSortedArr := MergeSort(leftArr);
 		//==>
-		assert leftSortedArr.Length == leftArr.Length && Sorted(leftSortedArr) && multiset(leftArr[..]) == multiset(leftSortedArr[..]);//post condition recursive call
+		assert leftSortedArr.Length == leftArr.Length && Sorted(leftSortedArr) && multiset(leftArr[..]) == multiset(leftSortedArr[..]);//post condition of recursive call
 		//==>
 		assert multiset(leftSortedArr[..]) == multiset(leftArr[..]);
 		//==>
@@ -56,7 +54,7 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 
 		var rightSortedArr := MergeSort(rightArr);
 		//==>
-		assert rightSortedArr.Length == rightArr.Length && Sorted(rightSortedArr) && multiset(rightArr[..]) == multiset(rightSortedArr[..]);//post condition recursive call
+		assert rightSortedArr.Length == rightArr.Length && Sorted(rightSortedArr) && multiset(rightArr[..]) == multiset(rightSortedArr[..]);//post condition of recursive call
 		//==>
 		assert multiset(rightSortedArr[..]) == multiset(rightArr[..]);
 		//==>
@@ -72,7 +70,6 @@ method MergeSort(a: array<int>) returns (b: array<int>)
 		assert multiset(a[..]) == multiset(b[..]);
 	}
 
-
 	assert b.Length == a.Length && Sorted(b) && multiset(a[..]) == multiset(b[..]);
 }
 
@@ -84,20 +81,18 @@ predicate method Guard1(a: array<int>)
 
 method MS1(a: array<int>,b0: array<int>) returns (b: array<int>)
 	 requires Guard1(a)
-
 	 ensures b.Length == a.Length && Sorted(b) && multiset(a[..]) == multiset(b[..])
 {	
-	assert  Guard1(a);
+
 	b:=b0;
 	// assignment
 	LemmaUpdateb(a,b);
 	b := a;
-	assert  b.Length == a.Length && Sorted(b) && multiset(a[..]) == multiset(b[..]);
+
 }
 
 lemma LemmaUpdateb(a: array<int>,b: array<int>)
 	requires Guard1(a)
-
 	ensures a.Length == a.Length && Sorted(a) && multiset(a[..]) == multiset(a[..])
 {}
 
@@ -108,8 +103,8 @@ method Merge(b: array<int>, c: array<int>, d: array<int>)
 	ensures Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..])
 	modifies b
 {
-	assert  b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
+
+
 
 	var bi, ci, di := Loop1(b, c, d); // introduce local variable + strengthen postcondition
 	//==> 
@@ -117,7 +112,6 @@ method Merge(b: array<int>, c: array<int>, d: array<int>)
 	Merga_alt(b, d, c, bi, di, ci);
 
 	
-	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 }
 
 
@@ -143,32 +137,19 @@ method Merga_alt(b: array<int>, d: array<int>, c: array<int>, bi:nat, di:nat, ci
 
 	{
 
-	assert  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length;
-	assert bi == ci+di;
-	assert SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..]);
-	assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
-	assert ci == c.Length || di == d.Length;
-	assert preffixASmallerThanSuffixB(b, c, bi, ci) && preffixASmallerThanSuffixB(b, d, bi, di);
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-
 	//alternation
 	if(Guard2(ci,c))
 	{
-		assert Guard2(ci,c);
-		Merga_alt_alt1(b, d, c, bi, di, ci);
-			
+		Merga_alt_alt1(b, d, c, bi, di, ci);	
 			
 	}
 	else
 	{
-		assert !Guard2(ci,c);
 		assert di == d.Length;
 		Merga_alt_alt2(b, d, c, bi, di, ci);
 
 	}
 
-	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 
 	}
 
@@ -187,19 +168,10 @@ method Merga_alt_alt1(b: array<int>, d: array<int>, c: array<int>, bi:nat, di:na
 	ensures Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..])
 	modifies b;
 	{
-	assert  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length;
-	assert bi == ci+di;
-	assert SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..]);
-	assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
-	assert ci == c.Length || di == d.Length;
-	assert preffixASmallerThanSuffixB(b, c, bi, ci) && preffixASmallerThanSuffixB(b, d, bi, di);
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert Guard2(ci,c);
+	
 
 	Loop2(b, d, c, bi, di, ci);
 
-	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 	}
 
 method Merga_alt_alt2(b: array<int>, d: array<int>, c: array<int>, bi:nat, di:nat, ci:nat) 
@@ -217,19 +189,10 @@ method Merga_alt_alt2(b: array<int>, d: array<int>, c: array<int>, bi:nat, di:na
 	ensures Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..])
 	modifies b;
 	{
-	assert  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length;
-	assert bi == ci+di;
-	assert SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..]);
-	assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
-	assert ci == c.Length || di == d.Length;
-	assert preffixASmallerThanSuffixB(b, c, bi, ci) && preffixASmallerThanSuffixB(b, d, bi, di);
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert !Guard2(ci,c);
+	
 
 	Loop2(b, c, d, bi, ci, di);
 
-	assert Sorted(b) && multiset(b[..]) == multiset(c[..])+multiset(d[..]);
 	}
 
 	
@@ -242,13 +205,11 @@ method copySeqToArray(q:seq<int>, a:array<int>)
 	ensures q == a[..]
 	modifies a
 {
-	assert |q| == a.Length;
 
 	var i:nat; // introduce local variable + strengthen postcondition
 	i:=copySeqToArray_Help(q,a);
 	Lemma1(q,a,i);
 
-	assert q == a[..];
 	
 }
 
@@ -265,13 +226,11 @@ method copySeqToArray_Help(q:seq<int>, a:array<int>) returns (i:nat)
 	modifies a
 {
 
-	assert |q| == a.Length;
 
 	// sequential composition
 	i:=Init_copySeqToArray_Help(q,a);
 	i:=Loop_copySeqToArray_Help(q,a,i);
 
-	assert Inv_copySeqToArray(q,a,i) && !(i < a.Length);
 
 }
 
@@ -282,8 +241,7 @@ method Loop_copySeqToArray_Help(q:seq<int>, a:array<int>,i0:nat) returns (i:nat)
 	ensures Inv_copySeqToArray(q,a,i) &&  !Guard_Loop_copySeqToArray_Help(a,i)
 	modifies a
 {
-	assert  |q| == a.Length;
-	assert Inv_copySeqToArray(q,a,i0);
+
 
 	i:=i0;
 	// iteration
@@ -295,7 +253,6 @@ method Loop_copySeqToArray_Help(q:seq<int>, a:array<int>,i0:nat) returns (i:nat)
 		
 	}
 
-	assert Inv_copySeqToArray(q,a,i) &&  !Guard_Loop_copySeqToArray_Help(a,i);
 
 }
 
@@ -313,16 +270,14 @@ method Loop_body_copySeqToArray_Help(q:seq<int>, a:array<int>,i0:nat) returns (i
 	ensures i0<i
 	modifies a
 {
-	assert |q| == a.Length ;
-	assert Inv_copySeqToArray(q,a,i0) && Guard_Loop_copySeqToArray_Help(a,i0);
+	
 
 	i:=i0;
 	a[i] := q[i];
 	L_update(q,a,i);
 	i := i+1;//assignemnt
 
-	assert Inv_copySeqToArray(q,a,i) && 0<=a.Length-i<a.Length-i0;
-	assert i0<i;
+	
 	
 
 }
@@ -340,22 +295,18 @@ lemma L_update(q:seq<int>, a:array<int>,i:nat)
 
 method Init_copySeqToArray_Help(q:seq<int>, a:array<int>) returns (i:nat)
 	requires |q| == a.Length
-
 	ensures Inv_copySeqToArray(q,a,i)
 {
-	assert |q| == a.Length;
 
 // assignment
 	LemmaInit_copySeqToArray_Help(q,a);
 	i:=0;
 
-	assert Inv_copySeqToArray(q,a,i);
 
 }
 
 lemma LemmaInit_copySeqToArray_Help(q: seq<int>,  a:array<int>)
 	requires |q| == a.Length
-
 	ensures Inv_copySeqToArray(q,a,0)
 {}
 
@@ -378,19 +329,12 @@ method Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, ci:na
 
 	modifies b
 {
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
+	
 
 	bi, ci, di := Init_Loop1(b,c,d);
 	bi,ci,di:=Loop_Loop1(b,c,d,bi,ci,di);
 	lemama_end_loop1(b,c,d,bi,ci,di);
 
-	assert  0 <= bi <= b.Length && 0 <= ci <= c.Length && 0 <= di <= d.Length;
-	assert bi == ci+di;
-	assert SortedSequence(b[0..bi]) && SortedSequence(c[..]) && SortedSequence(d[..]);
-	assert multiset(b[..bi]) == multiset(c[..ci]) + multiset(d[..di]);
-	assert ci == c.Length || di == d.Length;
-	assert preffixASmallerThanSuffixB(b, c, bi, ci) && preffixASmallerThanSuffixB(b, d, bi, di);
 
 	
 }
@@ -419,9 +363,6 @@ method Loop_Loop1(b: array<int>, c: array<int>, d: array<int>,bi0:nat, ci0:nat, 
 	modifies b
 	{
 
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert LoopsInv(b, c, d, bi0, ci0, di0);
 
 	bi, ci, di:=bi0,ci0,di0;
 	//iterartion
@@ -435,7 +376,6 @@ method Loop_Loop1(b: array<int>, c: array<int>, d: array<int>,bi0:nat, ci0:nat, 
 		bi := bi+1;
 	}
 
-	assert !Guard_Loop1(c,d,ci,di) && LoopsInv(b, c, d, bi, ci, di);
 
 	}
 
@@ -447,14 +387,12 @@ method Init_Loop1(b: array<int>, c: array<int>, d: array<int>) returns (bi:nat, 
 	ensures LoopsInv(b, c, d, bi, ci, di)
 	{
 
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
+
 
 	// assignment
 	Lemma_Init_Loop1(b,c,d);
 	bi, ci, di:=0,0,0;
 
-	assert LoopsInv(b, c, d, bi, ci, di);
 
 	}
 
@@ -482,26 +420,21 @@ method Loop_body_Loop1 (b: array<int>, c: array<int>, d: array<int>,bi:nat, ci0:
 	modifies b;
 {
 
-	assert  b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert LoopsInv(b, c, d, bi, ci0, di0 ) && Guard_Loop1(c,d,ci0,di0);
+	
 
 	ci:=ci0;
 	di:=di0;
 	// alternation + contract frame (*2)
 	if(Guard_Loop_body_Loop1(c,d,ci,di)){
 		
-		assert Guard_Loop_body_Loop1(c,d,ci,di);
 		ci:=Loop_body_Loop1_update_ci(b,c,d,bi,ci,di);
 			
 	}
 	else{
 		
-		assert !Guard_Loop_body_Loop1(c,d,ci,di);
 		di:=Loop_body_Loop1_update_di(b,c,d,bi,ci,di);
 	}
 
-	assert LoopsInv(b, c, d, bi+1, ci, di) && (0<=c.Length - ci <= c.Length-ci0 && 0<=d.Length-di <= d.Length-di0);
 }
 
 predicate method Guard_Loop_body_Loop1(c: array<int>, d: array<int>,ci:nat, di:nat)
@@ -523,9 +456,7 @@ method Loop_body_Loop1_update_ci (b: array<int>, c: array<int>, d: array<int>,bi
 	modifies b
 {
 
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert LoopsInv(b, c, d, bi, ci0, di) && Guard_Loop1(c,d,ci0,di) && Guard_Loop_body_Loop1(c,d,ci0,di);
+	
 	
 	ci:=ci0;
 	//assignemnt
@@ -533,8 +464,7 @@ method Loop_body_Loop1_update_ci (b: array<int>, c: array<int>, d: array<int>,bi
 	LemmaUpdateci(b,c,d,bi,ci,di);
 	ci := ci+1;
 
-	assert LoopsInv(b, c, d, bi+1, ci, di) && (0<=c.Length - ci < c.Length-ci0 && 0<=d.Length-di == d.Length-di);
-	assert ci0<ci;
+	
 
 }
 
@@ -547,17 +477,14 @@ method Loop_body_Loop1_update_di (b: array<int>, c: array<int>, d: array<int>,bi
 	ensures di0<di
 	modifies b
 {
-	assert b != c && b != d && b.Length == c.Length + d.Length;
-	assert Sorted(c) && Sorted(d);
-	assert LoopsInv(b, c, d, bi, ci, di0) && Guard_Loop1(c,d,ci,di0) && !(Guard_Loop_body_Loop1(c,d,ci,di0));
+	
 
 	di:=di0;
 	b[bi] := d[di];
 	LemmaUpdatedi(b,c,d,bi,ci,di);//assignemnt
 	di := di+1;
 
-	assert LoopsInv(b, c, d, bi+1, ci, di) && (0<=c.Length - ci == c.Length-ci && 0<=d.Length-di < d.Length-di0);
-	assert di0<di;
+
 
 }
 
@@ -597,22 +524,13 @@ method Loop2(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, arr1i0:
 	modifies b
 {
 
-	assert b.Length == arr1.Length + arr2.Length;
-	assert 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length;
-	assert bi0 == arr1i0 + arr2i0;
-	assert SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..]);
-	assert multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0]);
-	assert arr2i0 == arr2.Length;
-	assert preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0);
-
 
 // introduce local variable + strengthen postcondition
 	var bi, arr1i, arr2i;
 	bi, arr1i, arr2i:=Loop2_help(b,arr1,arr2,bi0,arr1i0,arr2i0);
 	lemma_end_loop(b,arr1,arr2,bi,arr1i,arr2i);
 
-	assert Sorted(b);
-	assert multiset(b[..]) == multiset(arr1[..])+multiset(arr2[..]);
+
 
 }
 
@@ -660,20 +578,13 @@ method Loop2_help(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, ar
 
 	modifies b
 {
-	assert b.Length == arr1.Length + arr2.Length;
-	assert 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length;
-	assert bi0 == arr1i0 + arr2i0;
-	assert SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..]);
-	assert multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0]);
-	assert arr2i0 == arr2.Length;
-	assert preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0);
+	
 	
 	// sequential composition
 	bi, arr1i, arr2i:=Init_Loop2(b,arr1,arr2,bi0,arr1i0,arr2i0);
 	bi, arr1i, arr2i:=Loop_Loop2(b,arr1,arr2,bi,arr1i, arr2i);
 
-	assert LoopsInv(b, arr1, arr2, bi, arr1i, arr2i) && !Guard_Loop2(arr1i,arr1);
-	assert  arr2i == arr2.Length;
+
 
 
 }
@@ -694,14 +605,7 @@ method Loop_Loop2(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, ar
 
 	modifies b;
 {
-	assert b.Length == arr1.Length + arr2.Length;
-	assert 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length;
-	assert bi0 == arr1i0 + arr2i0;
-	assert SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..]);
-	assert multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0]);
-	assert arr2i0 == arr2.Length;
-	assert preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0);
-	assert LoopsInv(b, arr1, arr2, bi0, arr1i0, arr2i0);
+	
 
 		
 	bi,arr1i,arr2i:=bi0,arr1i0,arr2i0;
@@ -714,8 +618,7 @@ method Loop_Loop2(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, ar
 		bi,arr1i:=Loop_Loop2_Body(b, arr1, arr2, bi, arr1i, arr2i);
 	}
 
-	assert LoopsInv(b, arr1, arr2, bi, arr1i, arr2i) && !Guard_Loop2(arr1i,arr1);
-	assert  arr2i == arr2.Length; 
+
 
 }
 
@@ -739,15 +642,7 @@ method Loop_Loop2_Body(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:na
 	ensures bi>bi0
 	modifies b;
 {
-	assert b.Length == arr1.Length + arr2.Length;
-	assert 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length;
-	assert bi0 == arr1i0 + arr2i0;
-	assert SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..]);
-	assert multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0]);
-	assert arr2i0 == arr2.Length;
-	assert preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0);
-	assert LoopsInv(b, arr1, arr2, bi0, arr1i0, arr2i0) && Guard_Loop2(arr1i0,arr1);
-
+	
 		
 	bi,arr1i:=bi0,arr1i0;
 	b[bi] := arr1[arr1i];
@@ -755,9 +650,7 @@ method Loop_Loop2_Body(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:na
 	arr1i:= arr1i+1;
 	bi := bi+1;
 
-	assert LoopsInv(b, arr1, arr2, bi, arr1i, arr2i0) && 0<=arr1.Length-arr1i< arr1.Length-arr1i0 ;
-	assert arr1i0<arr1i;
-	assert bi>bi0;
+	
 
 }
 
@@ -795,21 +688,11 @@ method Init_Loop2(b: array<int>, arr1: array<int>, arr2: array<int>, bi0:nat, ar
 	 
 	{
 
-	assert b.Length == arr1.Length + arr2.Length;
-	assert 0 <= bi0 <= b.Length && 0 <= arr1i0 <= arr1.Length && 0 <= arr2i0 <= arr2.Length;
-	assert bi0 == arr1i0 + arr2i0;
-	assert SortedSequence(b[0..bi0]) && SortedSequence(arr1[..]) && SortedSequence(arr2[..]);
-	assert multiset(b[..bi0]) == multiset(arr1[..arr1i0]) + multiset(arr2[..arr2i0]);
-	assert arr2i0 == arr2.Length;
-	assert preffixASmallerThanSuffixB(b, arr1, bi0, arr1i0) && preffixASmallerThanSuffixB(b, arr2, bi0, arr2i0);
-
+	
 	LemmaInit_Loop2(b,arr1,arr2,bi0,arr1i0,arr2i0);
 	bi, arr1i, arr2i := bi0, arr1i0, arr2i0;
 
-	assert bi==bi0 && arr1i==arr1i0 &&  arr2i==arr2i0 ;
-	assert arr2i == arr2.Length;
-	assert LoopsInv(b, arr1, arr2, bi, arr1i, arr2i);
-
+	
 	}
 
 
