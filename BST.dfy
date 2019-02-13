@@ -52,13 +52,11 @@ method BuildBST(q: seq<int>) returns (t: Tree)
 	ensures BST(t) && NumbersInTree(t) == NumbersInSequence(q)
 {
 	
-	assert NoDuplicates(q);
 
 	var i:nat;// introduce local variable + strengthen postcondition
 	i,t:=BuildBST2(q);
 	LemmaX(q,i,t);
 	
-	assert BST(t) && NumbersInTree(t) == NumbersInSequence(q);
 }
 
 method BuildBST2(q: seq<int>) returns  (i:nat ,t :Tree)
@@ -67,12 +65,10 @@ ensures Inv(q,t,i) && !Guard1(q,i,t)
 {
 	
 
-	assert  NoDuplicates(q);
 	// sequential composition
 	i,t:=Init(q);
 	i,t:=Loop(q,i,t);
 
-	assert Inv(q,t,i) && !Guard1(q,i,t);
 
 
 }
@@ -82,7 +78,6 @@ requires  Inv(q,t0,i0) && NoDuplicates(q)
 ensures  Inv(q,t,i) && !Guard1(q,i,t)
 {
 
-	assert Inv(q,t0,i0) && NoDuplicates(q);
 
 	i:=i0;
 	t:=t0;
@@ -95,7 +90,6 @@ ensures  Inv(q,t,i) && !Guard1(q,i,t)
 		i,t:=LoopBody(q,i,t);
 
 	}
-	assert Inv(q,t,i) && !Guard1(q,i,t);
 
 	
 }
@@ -105,7 +99,6 @@ requires  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q)
 ensures Inv(q,t,i) && 0 <= V(q,i) < V(q,i0)
 {
 
-		assert  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q);
 		i:=i0;
 		t:=t0;
 		
@@ -114,7 +107,6 @@ ensures Inv(q,t,i) && 0 <= V(q,i) < V(q,i0)
 		i:=i+1; 
 		LemmaWhile(q,i,t,i0,t0);
 
-		assert Inv(q,t,i) && 0 <= V(q,i) < V(q,i0);
 		
 
 }
@@ -168,7 +160,6 @@ ensures i==0
 ensures t==Empty
 ensures Inv(q,t,i)
 {//assignment
-	assert NoDuplicates(q);
 	
 
 	LemmaInit(q);
@@ -176,9 +167,6 @@ ensures Inv(q,t,i)
 	i:=0;
 	t:=Empty;
 
-	assert i==0;
-	assert t==Empty;
-	assert Inv(q,t,i);
 
 }
 
@@ -194,7 +182,6 @@ method InsertBST(t0: Tree, x: int) returns (t: Tree)
 	ensures BST(t) && NumbersInTree(t) == NumbersInTree(t0)+{x}
 {
 
-	assert  BST(t0) && x !in NumbersInTree(t0);
 
 	match t0 {
 		case Empty => t := Node(x, Empty, Empty);
@@ -204,7 +191,6 @@ method InsertBST(t0: Tree, x: int) returns (t: Tree)
 			{
 
 				
-				assert 	Guard2(x,n');
 
 				LemmaBinarySearchSubtree(n',nt1,nt2);
 
@@ -226,7 +212,6 @@ method InsertBST(t0: Tree, x: int) returns (t: Tree)
 			}
 			else
 			{
-				assert 	!Guard2(x,n');
 
 				LemmaBinarySearchSubtree(n',nt1,nt2);
 
@@ -286,9 +271,6 @@ lemma L_smaller(nt2:Tree, n':int, x:int, tRight:Tree)
 	ensures smallerThanTree(tRight, n')
 
 {
-	assert smallerThanTree(nt2, n');
-	assert n' < x;
-	assert NumbersInTree(tRight) == NumbersInTree(nt2)+{x};
 
 	L3(tRight, nt2, x);
 	//==>
@@ -303,10 +285,7 @@ lemma L_greater(nt1:Tree, n':int, x:int, tLeft:Tree)
 	requires NumbersInTree(tLeft) == NumbersInTree(nt1)+{x}
 	ensures greaterThanTree(tLeft, n')
 {
-	assert  greaterThanTree(nt1, n');
-	assert x < n';
-	assert NumbersInTree(tLeft) == NumbersInTree(nt1)+{x};
-
+	
 	L3(tLeft, nt1, x);
 	//==>
 	assert forall i:: 0 <= i < |Inorder(tLeft)| ==> Inorder(tLeft)[i] < n';
@@ -320,7 +299,6 @@ lemma L_BST(n: int, left: Tree, right: Tree)
 	ensures greaterThanTree(left, n)
 	ensures smallerThanTree(right, n)
 {
-	assert BST(Node(n, left, right));
 
 	assert Ascending(Inorder(Node(n, left, right)));
 	var qleft, qright := Inorder(left), Inorder(right);
