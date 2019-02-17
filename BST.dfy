@@ -51,7 +51,6 @@ method BuildBST(q: seq<int>) returns (t: Tree)
 	requires NoDuplicates(q)
 	ensures BST(t) && NumbersInTree(t) == NumbersInSequence(q)
 {
-	
 
 	var i:nat;// introduce local variable + strengthen postcondition
 	i,t:=BuildBST2(q);
@@ -64,12 +63,9 @@ requires NoDuplicates(q)
 ensures Inv(q,t,i) && !Guard1(q,i,t)
 {
 	
-
-	// sequential composition
+	// contract frame + sequential composition
 	i,t:=Init(q);
 	i,t:=Loop(q,i,t);
-
-
 
 }
 
@@ -77,8 +73,7 @@ method Loop(q: seq<int>,i0:nat,t0:Tree) returns  (i:nat ,t :Tree)
 requires  Inv(q,t0,i0) && NoDuplicates(q)
 ensures  Inv(q,t,i) && !Guard1(q,i,t)
 {
-
-
+	//contract frame 
 	i:=i0;
 	t:=t0;
 	//iteration
@@ -91,23 +86,20 @@ ensures  Inv(q,t,i) && !Guard1(q,i,t)
 
 	}
 
-	
 }
 
 method LoopBody(q: seq<int>,i0:nat,t0:Tree) returns  (i:nat ,t :Tree)
 requires  Inv(q,t0,i0) && Guard1(q,i0,t0) && NoDuplicates(q)
 ensures Inv(q,t,i) && 0 <= V(q,i) < V(q,i0)
 {
-
+		//contract frame 
 		i:=i0;
 		t:=t0;
 		
+		 //assignment
 		t := InsertBST(t, q[i]); 
-		LemmaI(q,i,t,t0); //assignment
-		i:=i+1; 
+		LemmaI(q,i,t,t0);		i:=i+1; 
 		LemmaWhile(q,i,t,i0,t0);
-
-		
 
 }
 function V(q:seq<int>,i:nat): int
@@ -123,8 +115,6 @@ predicate  Inv(q: seq<int> ,t: Tree,i:nat)
 }
 
 
-
-
 lemma LemmaI(q: seq<int>,i:nat,t:Tree,t0:Tree)
 	requires Inv(q,t0,i);
 	requires  0 <= i < |q|
@@ -132,8 +122,6 @@ lemma LemmaI(q: seq<int>,i:nat,t:Tree,t0:Tree)
 	ensures Inv(q,t,i+1);
 	ensures i < i+1
 {}
-
-
 
 
 lemma LemmaX(q: seq<int>,i:nat,t:Tree)
@@ -159,14 +147,12 @@ requires NoDuplicates(q)
 ensures i==0
 ensures t==Empty
 ensures Inv(q,t,i)
-{//assignment
+{// contract frame + assignment
 	
-
 	LemmaInit(q);
 
 	i:=0;
 	t:=Empty;
-
 
 }
 
@@ -189,8 +175,6 @@ method InsertBST(t0: Tree, x: int) returns (t: Tree)
 			//alternation
 			if(Guard2(x,n'))
 			{
-
-				
 
 				LemmaBinarySearchSubtree(n',nt1,nt2);
 
@@ -247,7 +231,7 @@ lemma L3(t1:Tree, t2:Tree, x:int)
 	requires NumbersInTree(t1) == NumbersInTree(t2)+{x}
 	ensures forall i:: 0 <= i < |Inorder(t1)| ==> Inorder(t1)[i] in Inorder(t2) || Inorder(t1)[i] == x
 	ensures forall i:: 0 <= i < |Inorder(t2)| ==> Inorder(t2)[i] in Inorder(t1)
-{
+{ //introduce local variables
 
 	var q1 := Inorder(t1);
 	var q2 := Inorder(t2);
@@ -299,7 +283,7 @@ lemma L_BST(n: int, left: Tree, right: Tree)
 	ensures greaterThanTree(left, n)
 	ensures smallerThanTree(right, n)
 {
-
+    // introduce local variables  
 	assert Ascending(Inorder(Node(n, left, right)));
 	var qleft, qright := Inorder(left), Inorder(right);
 	var q1 := qleft+[n]+qright;
@@ -335,7 +319,7 @@ lemma L(n: int, left: Tree, right: Tree)
 lemma	LemmaBinarySearchSubtree(n: int, left: Tree, right: Tree)
 	requires BST(Node(n, left, right))
 	ensures BST(left) && BST(right)
-{
+{//introducing local variables
 	assert Ascending(Inorder(Node(n, left, right)));
 	var qleft, qright := Inorder(left), Inorder(right);
 	var q := qleft+[n]+qright;
